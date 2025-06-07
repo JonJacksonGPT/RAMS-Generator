@@ -22,6 +22,7 @@ def form():
 @app.route("/questions", methods=["POST"])
 def questions():
     task = request.form.get("task")
+
     prompt = f"Generate 20 tailored RAMS pre-task planning questions based on the task: {task}. Use UK civil engineering terminology."
 
     try:
@@ -36,7 +37,7 @@ def questions():
         questions = [line.strip("1234567890. ").strip() for line in text.strip().split("\n") if line.strip()][:20]
         return render_template("questions.html", task=task, questions=questions)
     except Exception as e:
-        return f"Error generating questions: {str(e)}"
+        return f"<h2>❌ Error generating questions: {str(e)}</h2>"
 
 @app.route("/generate", methods=["POST"])
 def generate():
@@ -82,19 +83,34 @@ Use UK construction terminology only.
                 {"role": "user", "content": prompt}
             ]
         )
+
         output = response.choices[0].message.content
-        parts = output.split("Stage 2")[0], output.split("Stage 2")[1].split("Stage 3")[0], output.split("Stage 3")[1]
+
+        # ✅ Validate output structure
+        if "Stage 2" not in output or "Stage 3" not in output:
+            return "<h2>❌ Error: The response from GPT is missing required sections (Stage 2 or Stage 3).</h2>"
+
+        parts = (
+            output.split("Stage 2")[0],
+            output.split("Stage 2")[1].split("Stage 3")[0],
+            output.split("Stage 3")[1]
+        )
 
         ra_path = create_docx("Stage 1 - Risk Assessment", parts[0], "Risk_Assessment.docx")
         sa_path = create_docx("Stage 2 - Sequence of Activities", parts[1], "Sequence_of_Activities.docx")
         ms_path = create_docx("Stage 3 - Method Statement", parts[2], "Method_Statement.docx")
 
-        return f"RAMS generated. Download: <a href='/download?file=Risk_Assessment.docx'>Risk Assessment</a>, " \
-               f"<a href='/download?file=Sequence_of_Activities.docx'>Sequence</a>, " \
-               f"<a href='/download?file=Method_Statement.docx'>Method Statement</a>"
+        return f"""
+        <h2>✅ RAMS generated successfully.</h2>
+        <ul>
+            <li><a href='/download?file=Risk_Assessment.docx'>Download Risk Assessment</a></li>
+            <li><a href='/download?file=Sequence_of_Activities.docx'>Download Sequence of Activities</a></li>
+            <li><a href='/download?file=Method_Statement.docx'>Download Method Statement</a></li>
+        </ul>
+        """
 
     except Exception as e:
-        return f"Error generating RAMS: {str(e)}"
+        return f"<h2>❌ Error generating RAMS: {str(e)}</h2>"
 
 @app.route("/download")
 def download():
