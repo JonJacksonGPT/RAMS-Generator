@@ -26,7 +26,7 @@ def questions():
     prompt = f"Generate 20 tailored RAMS pre-task planning questions based on the task: {task}. Use UK civil engineering terminology."
 
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o",
         messages=[
             {"role": "system", "content": "You are a RAMS generator that only outputs plain tailored questions."},
             {"role": "user", "content": prompt}
@@ -74,7 +74,7 @@ Use UK construction terminology only.
 """
 
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o",
         messages=[
             {"role": "system", "content": "You are a specialist RAMS writer..."},
             {"role": "user", "content": prompt}
