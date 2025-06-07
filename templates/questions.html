@@ -6,9 +6,9 @@
 <body>
   <h1>Answer the Questions for: {{ task }}</h1>
   <form action="/generate" method="POST">
-    {% for question in questions %}
-      <label for="q{{ loop.index }}">{{ question }}</label><br>
-      <input type="text" name="q{{ loop.index }}" id="q{{ loop.index }}"><br><br>
+    {% for i in range(questions|length) %}
+      <label for="q{{ i+1 }}">{{ questions[i] }}</label><br>
+      <input type="text" name="q{{ i+1 }}" id="q{{ i+1 }}"><br><br>
     {% endfor %}
     <button type="submit">Generate RAMS</button>
   </form>
