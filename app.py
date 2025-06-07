@@ -1,3 +1,9 @@
+import os
+import openai
+
+openai.api_key = os.environ.get("OPENAI_API_KEY")
+
+
 from flask import Flask, request, render_template, send_file
 from generate_rams import generate_all_rams
 import zipfile
