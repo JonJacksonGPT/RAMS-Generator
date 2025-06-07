@@ -22,20 +22,21 @@ def form():
 @app.route("/questions", methods=["POST"])
 def questions():
     task = request.form.get("task")
-
     prompt = f"Generate 20 tailored RAMS pre-task planning questions based on the task: {task}. Use UK civil engineering terminology."
 
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": "You are a RAMS generator that only outputs plain tailored questions."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    text = response.choices[0].message.content
-    questions = [line.strip("1234567890. ").strip() for line in text.strip().split("\n") if line.strip()][:20]
-
-    return render_template("questions.html", task=task, questions=questions)
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a RAMS generator that only outputs plain tailored questions."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        text = response.choices[0].message.content
+        questions = [line.strip("1234567890. ").strip() for line in text.strip().split("\n") if line.strip()][:20]
+        return render_template("questions.html", task=task, questions=questions)
+    except Exception as e:
+        return f"Error generating questions: {str(e)}"
 
 @app.route("/generate", methods=["POST"])
 def generate():
@@ -73,24 +74,27 @@ Each stage must follow that format and be output as separate plain text blocks.
 Use UK construction terminology only.
 """
 
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": "You are a specialist RAMS writer..."},
-            {"role": "user", "content": prompt}
-        ]
-    )
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a specialist RAMS writer..."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        output = response.choices[0].message.content
+        parts = output.split("Stage 2")[0], output.split("Stage 2")[1].split("Stage 3")[0], output.split("Stage 3")[1]
 
-    output = response.choices[0].message.content
-    parts = output.split("Stage 2")[0], output.split("Stage 2")[1].split("Stage 3")[0], output.split("Stage 3")[1]
+        ra_path = create_docx("Stage 1 - Risk Assessment", parts[0], "Risk_Assessment.docx")
+        sa_path = create_docx("Stage 2 - Sequence of Activities", parts[1], "Sequence_of_Activities.docx")
+        ms_path = create_docx("Stage 3 - Method Statement", parts[2], "Method_Statement.docx")
 
-    ra_path = create_docx("Stage 1 - Risk Assessment", parts[0], "Risk_Assessment.docx")
-    sa_path = create_docx("Stage 2 - Sequence of Activities", parts[1], "Sequence_of_Activities.docx")
-    ms_path = create_docx("Stage 3 - Method Statement", parts[2], "Method_Statement.docx")
+        return f"RAMS generated. Download: <a href='/download?file=Risk_Assessment.docx'>Risk Assessment</a>, " \
+               f"<a href='/download?file=Sequence_of_Activities.docx'>Sequence</a>, " \
+               f"<a href='/download?file=Method_Statement.docx'>Method Statement</a>"
 
-    return f"RAMS generated. Download: <a href='/download?file=Risk_Assessment.docx'>Risk Assessment</a>, " \
-           f"<a href='/download?file=Sequence_of_Activities.docx'>Sequence</a>, " \
-           f"<a href='/download?file=Method_Statement.docx'>Method Statement</a>"
+    except Exception as e:
+        return f"Error generating RAMS: {str(e)}"
 
 @app.route("/download")
 def download():
