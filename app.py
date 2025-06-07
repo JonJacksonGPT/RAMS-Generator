@@ -1,10 +1,10 @@
 from flask import Flask, request, render_template, send_file
 import os
-import openai
+from openai import OpenAI
 from docx import Document
 
 app = Flask(__name__)
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 def create_docx(title, content, filename):
     doc = Document()
@@ -23,16 +23,16 @@ def form():
 def questions():
     task = request.form.get("task")
 
-    # Call OpenAI to generate 20 tailored questions
     prompt = f"Generate 20 tailored RAMS pre-task planning questions based on the task: {task}. Use UK civil engineering terminology."
-    response = openai.ChatCompletion.create(
+
+    response = client.chat.completions.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "You are a RAMS generator that only outputs plain tailored questions."},
             {"role": "user", "content": prompt}
         ]
     )
-    text = response.choices[0].message["content"]
+    text = response.choices[0].message.content
     questions = [line.strip("1234567890. ").strip() for line in text.strip().split("\n") if line.strip()][:20]
 
     return render_template("questions.html", task=task, questions=questions)
@@ -73,7 +73,7 @@ Each stage must follow that format and be output as separate plain text blocks.
 Use UK construction terminology only.
 """
 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "You are a specialist RAMS writer..."},
@@ -81,7 +81,7 @@ Use UK construction terminology only.
         ]
     )
 
-    output = response.choices[0].message["content"]
+    output = response.choices[0].message.content
     parts = output.split("Stage 2")[0], output.split("Stage 2")[1].split("Stage 3")[0], output.split("Stage 3")[1]
 
     ra_path = create_docx("Stage 1 - Risk Assessment", parts[0], "Risk_Assessment.docx")
@@ -100,3 +100,4 @@ def download():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
