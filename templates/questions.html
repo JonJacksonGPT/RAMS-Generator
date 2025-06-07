@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Answer RAMS Questions</title>
+  <title>Answer Tailored Questions</title>
 </head>
 <body>
-    <h1>Task: {{ task }}</h1>
-    <form action="/generate" method="POST">
-        {% for i, question in enumerate(questions, start=1) %}
-            <label for="q{{ i }}">{{ question }}</label><br>
-            <input type="text" name="q{{ i }}" id="q{{ i }}" required><br><br>
-        {% endfor %}
-        <button type="submit">Generate RAMS</button>
-    </form>
+  <h1>Answer the Questions for: {{ task }}</h1>
+  <form action="/generate" method="POST">
+    {% for question in questions %}
+      <label for="q{{ loop.index }}">{{ question }}</label><br>
+      <input type="text" name="q{{ loop.index }}" id="q{{ loop.index }}"><br><br>
+    {% endfor %}
+    <button type="submit">Generate RAMS</button>
+  </form>
 </body>
 </html>
