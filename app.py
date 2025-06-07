@@ -1,4 +1,3 @@
-
 from flask import Flask, request, render_template, send_file
 import os
 import openai
@@ -19,6 +18,24 @@ def create_docx(title, content, filename):
 @app.route("/", methods=["GET"])
 def form():
     return render_template("form.html")
+
+@app.route("/questions", methods=["POST"])
+def questions():
+    task = request.form.get("task")
+
+    # Call OpenAI to generate 20 tailored questions
+    prompt = f"Generate 20 tailored RAMS pre-task planning questions based on the task: {task}. Use UK civil engineering terminology."
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a RAMS generator that only outputs plain tailored questions."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    text = response.choices[0].message["content"]
+    questions = [line.strip("1234567890. ").strip() for line in text.strip().split("\n") if line.strip()][:20]
+
+    return render_template("questions.html", task=task, questions=questions)
 
 @app.route("/generate", methods=["POST"])
 def generate():
@@ -65,8 +82,8 @@ Use UK construction terminology only.
     )
 
     output = response.choices[0].message["content"]
-
     parts = output.split("Stage 2")[0], output.split("Stage 2")[1].split("Stage 3")[0], output.split("Stage 3")[1]
+
     ra_path = create_docx("Stage 1 - Risk Assessment", parts[0], "Risk_Assessment.docx")
     sa_path = create_docx("Stage 2 - Sequence of Activities", parts[1], "Sequence_of_Activities.docx")
     ms_path = create_docx("Stage 3 - Method Statement", parts[2], "Method_Statement.docx")
@@ -79,6 +96,7 @@ Use UK construction terminology only.
 def download():
     file = request.args.get("file")
     return send_file(os.path.join("/mnt/data", file), as_attachment=True)
+
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # default to 5000 if PORT not set
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
