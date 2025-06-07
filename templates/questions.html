@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Answer RAMS Questions</title>
+</head>
+<body>
+    <h1>Task: {{ task }}</h1>
+    <form action="/generate" method="POST">
+        {% for i, question in enumerate(questions, start=1) %}
+            <label for="q{{ i }}">{{ question }}</label><br>
+            <input type="text" name="q{{ i }}" id="q{{ i }}" required><br><br>
+        {% endfor %}
+        <button type="submit">Generate RAMS</button>
+    </form>
+</body>
+</html>
